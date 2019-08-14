@@ -1,0 +1,37 @@
+name: update_jira_task
+version: 0.0.1
+summary: Update status/fixversion for a Jira task.
+tags:
+  - jira task
+  - update task
+  - create jira version
+  - atlassian
+  - fixversion
+properties:
+  - name: TOKEN
+    type: string
+    required: true
+  - name: VERSION
+    type: string
+    required: true
+  - name: PROJECT_NAME
+    type: string
+    required: true
+  - name: TASK_ID
+    type: string
+    required: false
+  - name: STATUS_ID
+    type: string
+    required: false
+  - name: STATUS_NAME
+    type: string
+    required: false
+  - name: JIRA_URL
+    type: string
+    required: true
+  - name: JIRA_USER
+    type: string
+    required: true
+  - name: JIRA_COMMENT
+    type: string
+    required: false
