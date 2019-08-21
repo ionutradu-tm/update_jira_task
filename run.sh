@@ -6,7 +6,7 @@
 TOKEN=$WERCKER_UPDATE_JIRA_TASK_TOKEN
 VERSION=$WERCKER_UPDATE_JIRA_TASK_VERSION
 PROJECT_NAME=$WERCKER_UPDATE_JIRA_TASK_PROJECT_NAME
-TASK_ID=$WERCKER_UPDATE_JIRA_TASK_TASK_ID
+TASK_IDS=$WERCKER_UPDATE_JIRA_TASK_TASK_IDS
 STATUS_ID=$WERCKER_UPDATE_JIRA_TASK_STATUS_ID
 STATUS_NAME=$WERCKER_UPDATE_JIRA_TASK_STATUS_NAME
 JIRA_URL=$WERCKER_UPDATE_JIRA_TASK_JIRA_URL
@@ -21,7 +21,7 @@ JIRA_COMMENT=$WERCKER_UPDATE_JIRA_TASK_JIRA_COMMENT
 
 #FUNCTIONS
 
-function create_version{
+function create_version(){
     local TOKEN=$1
     local USER=$2
     local VERSION=$3
@@ -54,7 +54,7 @@ function create_version{
 
 }
 
-function get_status_id{
+function get_status_id(){
     local TOKEN=$1
     local USER=$2
     local PROJECT_NAME=$3
@@ -62,18 +62,18 @@ function get_status_id{
     local STATUS_NAME=$5
     local URL=$6
 
-    local CHECK_TASK_TRANSITIONS_URL=$URL"/rest/api/2/issue/"$PROJECT_NAME"-"$TASK_ID"/transitions"
+    local CHECK_TASK_TRANSITIONS_URL=$URL"/rest/api/2/issue/"$TASK_ID"/transitions"
     curl --silent --output=$WERCKER_OUTPUT_DIR/task_details.json $CHECK_TASK_TRANSITIONS_URL --user $USER:$TOKEN
     export STATUS_ID=$(cat $WERCKER_OUTPUT_DIR/task_details.json|  jq -r '.transitions[] | select(.name=="'"${STATUS_NAME}"'")| .id')
     if [[ -n $STATUS_ID ]];then
         echo "FOUND ID $STATUS_ID for $STATUS_NAME"
     else
-        echo "$STATUS_NAME is not a valid option for $PROJECT_NAME-$TASK_ID"
+        echo "$STATUS_NAME is not a valid option for $TASK_ID"
     fi
 
 }
 
-function update_task_status{
+function update_task_status(){
     local $TOKEN=$1
     local USER=$2
     local PROJECT_NAME=$3
@@ -84,7 +84,7 @@ function update_task_status{
     local COMMENT=$8
 
 
-    local local UPDATE_TASK_TRANSITIONS_URL=$URL"/rest/api/2/issue/"$PROJECT_NAME"-"$TASK_ID"/transitions?expand=transitions.fields"
+    local local UPDATE_TASK_TRANSITIONS_URL=$URL"/rest/api/2/issue/"$TASK_ID"/transitions?expand=transitions.fields"
 
     cat $WERCKER_OUTPUT_DIR/empty.json |
     jq 'setpath(["update","comment",0,"add","body"]; "'"$COMMENT"'")'|
@@ -93,7 +93,7 @@ function update_task_status{
     echo "curl --write-out %{http_code} --silent --output /dev/null -X POST --data @$WERCKER_OUTPUT_DIR/task_status_update.json $UPDATE_TASK_TRANSITIONS -H "Content-Type: application/json" --user $USER:$TOKEN"
     RESPONSE_CODE=$(curl --write-out %{http_code} --silent --output /dev/null -X POST --data @$WERCKER_OUTPUT_DIR/task_status_update.json $UPDATE_TASK_TRANSITIONS -H "Content-Type: application/json" --user $USER:$TOKEN)
     if [[ $RESPONSE_CODE != 204 ]];then
-        echo "Update status failed for TASK $PROJECT_NAME-$TASK_ID, ERROR_CODE: $RESPONSE_CODE"
+        echo "Update status failed for TASK $TASK_ID, ERROR_CODE: $RESPONSE_CODE"
     fi
 }
 #END_FUNCTIONS
@@ -123,15 +123,21 @@ if [[ -z $PROJECT_NAME ]];then
     echo "Please provide project name"
 fi
 
-if [[ -z $TASK_ID ]];then
-    echo "Please provide task ID"
+if [[ -z $TASK_IDS ]];then
+    echo "Please provide task IDs"
 fi
 
 JIRA_COMMENT=${JIRA_COMMENT:-"Status/fix version updated by wercker"}
 
 echo "create_version $TOKEN $JIRA_USER $VERSION $PROJECT_NAME $JIRA_URL"
 create_version $TOKEN $JIRA_USER $VERSION $PROJECT_NAME $JIRA_URL
-if [[ -z $STATUS_ID ]];then
-    get_status_id $TOKEN $JIRA_USER $PROJECT_NAME $TASK_ID $STATUS_NAME $JIRA_URL
-fi
-update_task_status $TOKEN $JIRA_USER $PROJECT_NAME $TASK_ID $STATUS_ID $JIRA_URL $VERSION $JIRA_COMMENT
+
+
+for TASK_ID in $TASK_IDS
+do
+
+    if [[ -z $STATUS_ID ]];then
+        get_status_id $TOKEN $JIRA_USER $PROJECT_NAME $TASK_ID $STATUS_NAME $JIRA_URL $JIRA_COMMENT
+    fi
+    update_task_status $TOKEN $JIRA_USER $PROJECT_NAME $TASK_ID $STATUS_ID $JIRA_URL $VERSION $JIRA_COMMENT
+done
