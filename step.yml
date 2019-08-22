@@ -1,5 +1,5 @@
 name: update_jira_task
-version: 0.0.3
+version: 0.0.4
 summary: Update status/fixversion for a Jira task.
 tags:
   - jira task
@@ -17,7 +17,7 @@ properties:
   - name: PROJECT_NAME
     type: string
     required: true
-  - name: TASK_ID
+  - name: TASK_IDS
     type: string
     required: false
   - name: STATUS_ID
