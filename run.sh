@@ -105,26 +105,32 @@ fi
 
 if [[ -z $TOKEN ]];then
     echo "Please provide token"
+    exit 2
 fi
 
 if [[ -z $JIRA_USER ]];then
     echo "Please provide Jira user"
+    exit 2
 fi
 
 if [[ -z $JIRA_URL ]];then
     echo "Please provide Jira URL"
+    exit 2
 fi
 
 if [[ -z $VERSION ]];then
     echo "Please provide version"
+    exit 2
 fi
 
 if [[ -z $PROJECT_NAME ]];then
     echo "Please provide project name"
+    exit 2
 fi
 
 if [[ -z $TASK_IDS ]];then
     echo "Please provide task IDs"
+    exit 2
 fi
 
 JIRA_COMMENT=${JIRA_COMMENT:-"Status/fix version updated by wercker"}
