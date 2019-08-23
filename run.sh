@@ -59,11 +59,11 @@ function get_status_id(){
     local USER=$2
     local PROJECT_NAME=$3
     local TASK_ID=$4
-    local STATUS_NAME=$5
-    local URL=$6
+    local URL=$5
 
     local CHECK_TASK_TRANSITIONS_URL=$URL"/rest/api/2/issue/"$TASK_ID"/transitions"
     curl --silent --output $WERCKER_OUTPUT_DIR/task_details.json $CHECK_TASK_TRANSITIONS_URL --user $USER:$TOKEN
+    echo $STATUS_NAME
     export STATUS_ID=$(cat $WERCKER_OUTPUT_DIR/task_details.json|  jq -r '.transitions[] | select(.name=="'"${STATUS_NAME}"'")| .id')
     if [[ -n $STATUS_ID ]];then
         echo "FOUND ID $STATUS_ID for $STATUS_NAME"
@@ -143,7 +143,7 @@ for TASK_ID in $TASK_IDS
 do
 
     if [[ -z $STATUS_ID ]];then
-        get_status_id $TOKEN $JIRA_USER $PROJECT_NAME $TASK_ID $STATUS_NAME $JIRA_URL $JIRA_COMMENT
+        get_status_id $TOKEN $JIRA_USER $PROJECT_NAME $TASK_ID $JIRA_URL $JIRA_COMMENT
     fi
     update_task_status $TOKEN $JIRA_USER $PROJECT_NAME $TASK_ID $STATUS_ID $JIRA_URL $VERSION $JIRA_COMMENT
 done
