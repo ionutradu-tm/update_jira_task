@@ -63,7 +63,7 @@ function get_status_id(){
     local URL=$6
 
     local CHECK_TASK_TRANSITIONS_URL=$URL"/rest/api/2/issue/"$TASK_ID"/transitions"
-    curl --silent --output=$WERCKER_OUTPUT_DIR/task_details.json $CHECK_TASK_TRANSITIONS_URL --user $USER:$TOKEN
+    curl --silent --output $WERCKER_OUTPUT_DIR/task_details.json $CHECK_TASK_TRANSITIONS_URL --user $USER:$TOKEN
     export STATUS_ID=$(cat $WERCKER_OUTPUT_DIR/task_details.json|  jq -r '.transitions[] | select(.name=="'"${STATUS_NAME}"'")| .id')
     if [[ -n $STATUS_ID ]];then
         echo "FOUND ID $STATUS_ID for $STATUS_NAME"
