@@ -66,7 +66,7 @@ function get_status_id(){
     echo $STATUS_NAME
     export STATUS_ID=$(cat $WERCKER_OUTPUT_DIR/task_details.json|  jq -r '.transitions[] | select(.name=="'"${STATUS_NAME}"'")| .id')
     if [[ -n $STATUS_ID ]];then
-        echo "FOUND ID $STATUS_ID for $STATUS_NAME"
+        echo "FOUND ID $STATUS_ID for $TASK_ID"
     else
         echo "$STATUS_NAME is not a valid option for $TASK_ID"
     fi
@@ -74,7 +74,7 @@ function get_status_id(){
 }
 
 function update_task_status(){
-    local $TOKEN=$1
+    local TOKEN=$1
     local USER=$2
     local PROJECT_NAME=$3
     local TASK_ID=$4
@@ -142,8 +142,6 @@ create_version $TOKEN $JIRA_USER $VERSION $PROJECT_NAME $JIRA_URL
 for TASK_ID in $TASK_IDS
 do
 
-    if [[ -z $STATUS_ID ]];then
-        get_status_id $TOKEN $JIRA_USER $PROJECT_NAME $TASK_ID $JIRA_URL $JIRA_COMMENT
-    fi
+    get_status_id $TOKEN $JIRA_USER $PROJECT_NAME $TASK_ID $JIRA_URL $JIRA_COMMENT
     update_task_status $TOKEN $JIRA_USER $PROJECT_NAME $TASK_ID $STATUS_ID $JIRA_URL $VERSION $JIRA_COMMENT
 done
