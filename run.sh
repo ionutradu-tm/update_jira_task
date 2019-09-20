@@ -118,10 +118,6 @@ if [[ -z $JIRA_URL ]];then
     exit 2
 fi
 
-if [[ -z $VERSION ]];then
-    echo "Please provide version"
-    exit 2
-fi
 
 if [[ -z $PROJECT_NAME ]];then
     echo "Please provide project name"
@@ -133,17 +129,21 @@ if [[ -z $TASK_IDS ]];then
     exit 2
 fi
 
-JIRA_COMMENT=${JIRA_COMMENT:-"Status/fix version updated by wercker"}
+if [[ -z $VERSION ]];then
+    echo "Please provide version"
 
-echo "create_version $TOKEN $JIRA_USER $VERSION $PROJECT_NAME $JIRA_URL"
-create_version $TOKEN $JIRA_USER $VERSION $PROJECT_NAME $JIRA_URL
+else
+    JIRA_COMMENT=${JIRA_COMMENT:-"Status/fix version updated by wercker"}
 
+    echo "create_version $TOKEN $JIRA_USER $VERSION $PROJECT_NAME $JIRA_URL"
+    create_version $TOKEN $JIRA_USER $VERSION $PROJECT_NAME $JIRA_URL
 
-for TASK_ID in $TASK_IDS
-do
+    for TASK_ID in $TASK_IDS
+    do
 
-    get_status_id $TOKEN $JIRA_USER $PROJECT_NAME $TASK_ID $JIRA_URL $JIRA_COMMENT
-    if [[ -n $STATUS_ID ]]; then
-        update_task_status $TOKEN $JIRA_USER $PROJECT_NAME $TASK_ID $STATUS_ID $JIRA_URL $VERSION $JIRA_COMMENT
-    fi
-done
+        get_status_id $TOKEN $JIRA_USER $PROJECT_NAME $TASK_ID $JIRA_URL $JIRA_COMMENT
+        if [[ -n $STATUS_ID ]]; then
+            update_task_status $TOKEN $JIRA_USER $PROJECT_NAME $TASK_ID $STATUS_ID $JIRA_URL $VERSION $JIRA_COMMENT
+        fi
+    done
+fi
