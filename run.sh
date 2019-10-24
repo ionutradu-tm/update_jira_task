@@ -67,8 +67,10 @@ function get_status_id(){
     export STATUS_ID=$(cat $WERCKER_OUTPUT_DIR/task_details.json|  jq -r '.transitions[] | select(.name=="'"${STATUS_NAME}"'")| .id')
     if [[ -n $STATUS_ID ]];then
         echo "FOUND ID $STATUS_ID for $TASK_ID"
+        echo "$TASK_ID updated" >> status.txt
     else
         echo "$STATUS_NAME is not a valid option for $TASK_ID"
+        echo "$TASK_ID not updated" >> status.txt
     fi
 
 }
@@ -138,6 +140,7 @@ else
     echo "create_version $TOKEN $JIRA_USER $VERSION $PROJECT_NAME $JIRA_URL"
     create_version $TOKEN $JIRA_USER $VERSION $PROJECT_NAME $JIRA_URL
 
+    echo "" > status.txt
     for TASK_ID in $TASK_IDS
     do
 
@@ -146,4 +149,5 @@ else
             update_task_status $TOKEN $JIRA_USER $PROJECT_NAME $TASK_ID $STATUS_ID $JIRA_URL $VERSION $JIRA_COMMENT
         fi
     done
+    cat status.txt
 fi
