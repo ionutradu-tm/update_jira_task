@@ -43,7 +43,7 @@ function create_version(){
     jq 'setpath(["project"]; "'"${PROJECT_NAME}"'")' > $WERCKER_OUTPUT_DIR/create_version.json
 
     #create version
-    echo "curl -X POST --data @create_version.json $CREATE_VERSION_URL -H "Content-Type: application/json" --user $USER:$TOKEN"
+    echo "curl -X POST --data @create_version.json $CREATE_VERSION_URL -H "Content-Type: application/json" --user $USER:TOKEN"
     RESPONSE_CODE=$(curl --write-out %{http_code} --silent --output /dev/null -X POST --data @$WERCKER_OUTPUT_DIR/create_version.json $CREATE_VERSION_URL -H "Content-Type: application/json" --user $USER:$TOKEN)
     if [[ $RESPONSE_CODE != 201 ]];then
             echo "Error creating version $VERSION, ERROR_CODE: $RESPONSE_CODE"
@@ -92,7 +92,7 @@ function update_task_status(){
     jq 'setpath(["update","comment",0,"add","body"]; "'"$COMMENT"'")'|
     jq 'setpath(["update","fixVersions",0,"add","name"]; "'"$VERSION"'")'|
     jq 'setpath(["transition","id"]; "'"$STATUS_ID"'")' > $WERCKER_OUTPUT_DIR/task_status_update.json
-    echo "curl --write-out %{http_code} --silent --output /dev/null -X POST --data @$WERCKER_OUTPUT_DIR/task_status_update.json $UPDATE_TASK_TRANSITIONS_URL -H "Content-Type: application/json" --user $USER:$TOKEN"
+    echo "curl --write-out %{http_code} --silent --output /dev/null -X POST --data @$WERCKER_OUTPUT_DIR/task_status_update.json $UPDATE_TASK_TRANSITIONS_URL -H "Content-Type: application/json" --user $USER:TOKEN"
     RESPONSE_CODE=$(curl --write-out %{http_code} --silent --output /dev/null -X POST --data @$WERCKER_OUTPUT_DIR/task_status_update.json $UPDATE_TASK_TRANSITIONS_URL -H "Content-Type: application/json" --user $USER:$TOKEN)
     if [[ $RESPONSE_CODE != 204 ]];then
         echo "Update status failed for TASK $TASK_ID, ERROR_CODE: $RESPONSE_CODE"

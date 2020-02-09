@@ -1,5 +1,5 @@
 name: update_jira_task
-version: 0.0.11
+version: 0.0.12
 summary: Update status/fixversion for a Jira task.
 tags:
   - jira task
