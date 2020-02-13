@@ -160,18 +160,19 @@ else
 
     echo "create_version TOKEN ${JIRA_USER} ${VERSION} ${PROJECT_NAME} ${JIRA_URL}"
     create_version ${JIRA_TOKEN} ${JIRA_USER} ${VERSION} ${PROJECT_NAME} ${JIRA_URL}
+    if [ $? -eq 0 ]; then
+      echo "" > status.txt
+      for TASK_ID in ${TASK_IDS}
+      do
 
-    echo "" > status.txt
-    for TASK_ID in ${TASK_IDS}
-    do
+          get_status_id ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${JIRA_URL} ${JIRA_COMMENT}
+          if [[ -n ${STATUS_ID} ]]; then
+              update_task_status ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${STATUS_ID} ${JIRA_URL} ${VERSION} ${JIRA_COMMENT}
+              echo "Add Fix version ${VERSION} for task ${TASK_ID}"
+              update_task_fix_version ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${JIRA_URL} ${VERSION}
 
-        get_status_id ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${JIRA_URL} ${JIRA_COMMENT}
-        if [[ -n ${STATUS_ID} ]]; then
-            update_task_status ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${STATUS_ID} ${JIRA_URL} ${VERSION} ${JIRA_COMMENT}
-            echo "Add Fix version ${VERSION} for task ${TASK_ID}"
-            update_task_fix_version ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${JIRA_URL} ${VERSION}
-
-        fi
-    done
-    cat status.txt
+          fi
+      done
+      cat status.txt
+    fi
 fi
