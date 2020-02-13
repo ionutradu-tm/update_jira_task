@@ -3,7 +3,7 @@
 
 #VARS:
 
-TOKEN=$WERCKER_UPDATE_JIRA_TASK_TOKEN
+JIRA_TOKEN=$WERCKER_UPDATE_JIRA_TASK_TOKEN
 VERSION=$WERCKER_UPDATE_JIRA_TASK_VERSION
 PROJECT_NAME=$WERCKER_UPDATE_JIRA_TASK_PROJECT_NAME
 TASK_IDS=$WERCKER_UPDATE_JIRA_TASK_TASK_IDS
@@ -47,7 +47,7 @@ function create_version(){
     RESPONSE_CODE=$(curl --write-out %{http_code} --silent --output /dev/null -X POST --data @$WERCKER_OUTPUT_DIR/create_version.json $CREATE_VERSION_URL -H "Content-Type: application/json" --user $USER:$TOKEN)
     if [[ $RESPONSE_CODE != 201 ]];then
             echo "Error creating version $VERSION, ERROR_CODE: $RESPONSE_CODE"
-            exit 2
+            return 2
     fi
     echo "Version $VERSION has been created successfully"
 
@@ -75,6 +75,28 @@ function get_status_id(){
 
 }
 
+function update_task_fix_version(){
+    local TOKEN=$1
+    local USER=$2
+    local PROJECT_NAME=$3
+    local TASK_ID=$4
+    local URL=$5
+    local VERSION=$6
+
+
+    local UPDATE_TASK_TRANSITIONS_URL=$URL"/rest/api/3/issue/${TASK_ID}"
+
+    echo -e "{\n}" >empty.json
+    cat empty.json |
+    jq 'setpath(["update","fixVersions",0,"add","name"]; "'"$VERSION"'")'> task_status_update.json
+    echo "curl --write-out %{http_code} --silent --output /dev/null -X POST --data @task_status_update.json $UPDATE_TASK_TRANSITIONS_URL -H "Content-Type: application/json" --user $USER:TOKEN"
+    RESPONSE_CODE=$(curl --write-out %{http_code} --silent --output /dev/null -X PUT --data @task_status_update.json $UPDATE_TASK_TRANSITIONS_URL -H "Content-Type: application/json" --user $USER:$TOKEN)
+    if [[ $RESPONSE_CODE != 204 ]];then
+        echo "Update status failed for TASK $TASK_ID, ERROR_CODE: $RESPONSE_CODE"
+    fi
+}
+
+
 function update_task_status(){
     local TOKEN=$1
     local USER=$2
@@ -90,7 +112,6 @@ function update_task_status(){
 
     cat $WERCKER_OUTPUT_DIR/empty.json |
     jq 'setpath(["update","comment",0,"add","body"]; "'"$COMMENT"'")'|
-    jq 'setpath(["update","fixVersions",0,"add","name"]; "'"$VERSION"'")'|
     jq 'setpath(["transition","id"]; "'"$STATUS_ID"'")' > $WERCKER_OUTPUT_DIR/task_status_update.json
     echo "curl --write-out %{http_code} --silent --output /dev/null -X POST --data @$WERCKER_OUTPUT_DIR/task_status_update.json $UPDATE_TASK_TRANSITIONS_URL -H "Content-Type: application/json" --user $USER:TOKEN"
     RESPONSE_CODE=$(curl --write-out %{http_code} --silent --output /dev/null -X POST --data @$WERCKER_OUTPUT_DIR/task_status_update.json $UPDATE_TASK_TRANSITIONS_URL -H "Content-Type: application/json" --user $USER:$TOKEN)
@@ -100,53 +121,56 @@ function update_task_status(){
 }
 #END_FUNCTIONS
 
-if [[ -z $STATUS_ID ]] && [[ -z $STATUS_NAME ]];then
+if [[ -z ${STATUS_ID} ]] && [[ -z ${STATUS_NAME} ]];then
     echo "STATUS_ID or STATUS_NAME should be set"
     exit 2
 fi
 
-if [[ -z $TOKEN ]];then
+if [[ -z ${JIRA_TOKEN} ]];then
     echo "Please provide token"
     exit 2
 fi
 
-if [[ -z $JIRA_USER ]];then
+if [[ -z ${JIRA_USER} ]];then
     echo "Please provide Jira user"
     exit 2
 fi
 
-if [[ -z $JIRA_URL ]];then
+if [[ -z ${JIRA_URL} ]];then
     echo "Please provide Jira URL"
     exit 2
 fi
 
 
-if [[ -z $PROJECT_NAME ]];then
+if [[ -z ${PROJECT_NAME} ]];then
     echo "Please provide project name"
     exit 2
 fi
 
-if [[ -z $TASK_IDS ]];then
+if [[ -z ${TASK_IDS} ]];then
     echo "Please provide task IDs"
     exit 2
 fi
 
-if [[ -z $VERSION ]];then
+if [[ -z ${VERSION} ]];then
     echo "Please provide version"
 
 else
     JIRA_COMMENT=${JIRA_COMMENT:-"Status/fix version updated by wercker"}
 
-    echo "create_version $TOKEN $JIRA_USER $VERSION $PROJECT_NAME $JIRA_URL"
-    create_version $TOKEN $JIRA_USER $VERSION $PROJECT_NAME $JIRA_URL
+    echo "create_version TOKEN ${JIRA_USER} ${VERSION} ${PROJECT_NAME} ${JIRA_URL}"
+    create_version ${JIRA_TOKEN} ${JIRA_USER} ${VERSION} ${PROJECT_NAME} ${JIRA_URL}
 
     echo "" > status.txt
-    for TASK_ID in $TASK_IDS
+    for TASK_ID in ${TASK_IDS}
     do
 
-        get_status_id $TOKEN $JIRA_USER $PROJECT_NAME $TASK_ID $JIRA_URL $JIRA_COMMENT
-        if [[ -n $STATUS_ID ]]; then
-            update_task_status $TOKEN $JIRA_USER $PROJECT_NAME $TASK_ID $STATUS_ID $JIRA_URL $VERSION $JIRA_COMMENT
+        get_status_id ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${JIRA_URL} ${JIRA_COMMENT}
+        if [[ -n ${STATUS_ID} ]]; then
+            update_task_status ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${STATUS_ID} ${JIRA_URL} ${VERSION} ${JIRA_COMMENT}
+            echo "Add Fix version ${VERSION} for task ${TASK_ID}"
+            update_task_fix_version ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${JIRA_URL} ${VERSION}
+
         fi
     done
     cat status.txt
