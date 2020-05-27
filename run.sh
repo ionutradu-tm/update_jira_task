@@ -108,7 +108,7 @@ function update_task_status(){
     local COMMENT=$8
 
 
-    local local UPDATE_TASK_TRANSITIONS_URL=$URL"/rest/api/2/issue/"$TASK_ID"/transitions?expand=transitions.fields"
+    local UPDATE_TASK_TRANSITIONS_URL=$URL"/rest/api/2/issue/"$TASK_ID"/transitions?expand=transitions.fields"
 
     cat $WERCKER_OUTPUT_DIR/empty.json |
     jq 'setpath(["update","comment",0,"add","body"]; "'"$COMMENT"'")'|
@@ -169,9 +169,8 @@ else
           if [[ -n ${STATUS_ID} ]]; then
               update_task_status ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${STATUS_ID} ${JIRA_URL} ${VERSION} ${JIRA_COMMENT}
               echo "Add Fix version ${VERSION} for task ${TASK_ID}"
-              update_task_fix_version ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${JIRA_URL} ${VERSION}
-
           fi
+          update_task_fix_version ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${JIRA_URL} ${VERSION}
       done
       cat status.txt
     fi
