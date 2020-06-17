@@ -64,13 +64,21 @@ function get_status_id(){
     local CHECK_TASK_TRANSITIONS_URL=$URL"/rest/api/2/issue/"$TASK_ID"/transitions"
     curl --silent --output $WERCKER_OUTPUT_DIR/task_details.json $CHECK_TASK_TRANSITIONS_URL --user $USER:$TOKEN
     echo $STATUS_NAME
+
+    local GET_STATUS_URL=${URL}"/rest/api/3/issue/"${TASK_ID}"?fields=components"
+    local RESPONSE_CODE=$(curl --write-out %{http_code} --silent --output $WERCKER_OUTPUT_DIR/get_task_component.json ${GET_STATUS_URL} --user $USER:$TOKEN)
+    if [[ ${RESPONSE_CODE} != 200 ]];then
+      echo "Error getting task component"
+    else
+      export COMPONENT=$(cat $WERCKER_OUTPUT_DIR/get_task_component.json| jq .fields.components[].name| tr -d \")
+    fi
+
     export STATUS_ID=$(cat $WERCKER_OUTPUT_DIR/task_details.json|  jq -r '.transitions[] | select(.name=="'"${STATUS_NAME}"'")| .id')
     if [[ -n $STATUS_ID ]];then
         echo "FOUND ID $STATUS_ID for $TASK_ID"
-        echo "$TASK_ID updated" >> status.txt
     else
         echo "$STATUS_NAME is not a valid option for $TASK_ID"
-        echo "$TASK_ID not updated" >> status.txt
+        echo "$TASK_ID ${COMPONENT} not updated" >> status.txt
     fi
 
 }
@@ -93,6 +101,9 @@ function update_task_fix_version(){
     RESPONSE_CODE=$(curl --write-out %{http_code} --silent --output /dev/null -X PUT --data @task_status_update.json $UPDATE_TASK_TRANSITIONS_URL -H "Content-Type: application/json" --user $USER:$TOKEN)
     if [[ $RESPONSE_CODE != 204 ]];then
         echo "Update status failed for TASK $TASK_ID, ERROR_CODE: $RESPONSE_CODE"
+        echo "$TASK_ID ${COMPONENT} not updated" >> status.txt
+    else
+        echo "$TASK_ID ${COMPONENT} updated" >> status.txt
     fi
 }
 
@@ -169,8 +180,8 @@ else
           if [[ -n ${STATUS_ID} ]]; then
               update_task_status ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${STATUS_ID} ${JIRA_URL} ${VERSION} ${JIRA_COMMENT}
               echo "Add Fix version ${VERSION} for task ${TASK_ID}"
+              update_task_fix_version ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${JIRA_URL} ${VERSION}
           fi
-          update_task_fix_version ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${JIRA_URL} ${VERSION}
       done
       cat status.txt
     fi
