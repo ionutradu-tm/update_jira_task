@@ -12,6 +12,7 @@ STATUS_NAME=$WERCKER_UPDATE_JIRA_TASK_STATUS_NAME
 JIRA_URL=$WERCKER_UPDATE_JIRA_TASK_JIRA_URL
 JIRA_USER=$WERCKER_UPDATE_JIRA_TASK_JIRA_USER
 JIRA_COMMENT=$WERCKER_UPDATE_JIRA_TASK_JIRA_COMMENT
+JIRA_COMPONENTS=$WERCKER_UPDATE_JIRA_TASK_JIRA_COMPONENTS
 
 
 
@@ -70,7 +71,7 @@ function get_status_id(){
     if [[ ${RESPONSE_CODE} != 200 ]];then
       echo "Error getting task component"
     else
-      export COMPONENT=$(cat $WERCKER_OUTPUT_DIR/get_task_component.json| jq .fields.components[].name| tr -d \")
+      export COMPONENT=$(cat $WERCKER_OUTPUT_DIR/get_task_component.json| jq .fields.components[0].name| tr -d \")
     fi
 
     export STATUS_ID=$(cat $WERCKER_OUTPUT_DIR/task_details.json|  jq -r '.transitions[] | select(.name=="'"${STATUS_NAME}"'")| .id')
@@ -78,7 +79,7 @@ function get_status_id(){
         echo "FOUND ID $STATUS_ID for $TASK_ID"
     else
         echo "$STATUS_NAME is not a valid option for $TASK_ID"
-        echo "$TASK_ID ${COMPONENT} not updated" >> status.txt
+        echo "$TASK_ID (${COMPONENT}) not updated" >> status.txt
     fi
 
 }
@@ -93,17 +94,38 @@ function update_task_fix_version(){
 
 
     local UPDATE_TASK_TRANSITIONS_URL=$URL"/rest/api/3/issue/${TASK_ID}"
-
-    echo -e "{\n}" >empty.json
-    cat empty.json |
-    jq 'setpath(["update","fixVersions",0,"add","name"]; "'"$VERSION"'")'> task_status_update.json
-    echo "curl --write-out %{http_code} --silent --output /dev/null -X POST --data @task_status_update.json $UPDATE_TASK_TRANSITIONS_URL -H "Content-Type: application/json" --user $USER:TOKEN"
-    RESPONSE_CODE=$(curl --write-out %{http_code} --silent --output /dev/null -X PUT --data @task_status_update.json $UPDATE_TASK_TRANSITIONS_URL -H "Content-Type: application/json" --user $USER:$TOKEN)
-    if [[ $RESPONSE_CODE != 204 ]];then
-        echo "Update status failed for TASK $TASK_ID, ERROR_CODE: $RESPONSE_CODE"
-        echo "$TASK_ID ${COMPONENT} not updated" >> status.txt
+    shopt -s nocasematch
+    echo "COMPONENTS:${JIRA_COMPONENTS}"
+    echo "JIRA_COMPONENT: ${COMPONENT}"
+    if [[ ${JIRA_COMPONENTS} =~ ${COMPONENT} ]];then
+      if [[ ${VERSION} =~ ${COMPONENT} ]];then
+        UPDATE_TASK="y"
+      else
+        UPDATE_TASK="n"
+      fi
     else
-        echo "$TASK_ID ${COMPONENT} updated" >> status.txt
+      UPDATE_TASK="y"
+      for X_COMPONENT in ${JIRA_COMPONENTS} do
+        if [[ ${VERSION} =~ ${X_COMPONENT} ]];then
+          UPDATE_TASK="n"
+        fi
+      done
+    fi
+    echo "UPDATE_TASK: ${UPDATE_TASL}"
+    if [[ ${UPDATE_TASK} == "y" ]];then
+      echo -e "{\n}" >empty.json
+      cat empty.json |
+      jq 'setpath(["update","fixVersions",0,"add","name"]; "'"$VERSION"'")'> task_status_update.json
+      echo "curl --write-out %{http_code} --silent --output /dev/null -X POST --data @task_status_update.json $UPDATE_TASK_TRANSITIONS_URL -H "Content-Type: application/json" --user $USER:TOKEN"
+      RESPONSE_CODE=$(curl --write-out %{http_code} --silent --output /dev/null -X PUT --data @task_status_update.json $UPDATE_TASK_TRANSITIONS_URL -H "Content-Type: application/json" --user $USER:$TOKEN)
+      if [[ $RESPONSE_CODE != 204 ]];then
+          echo "Update status failed for TASK $TASK_ID, ERROR_CODE: $RESPONSE_CODE"
+          echo "$TASK_ID (${COMPONENT}) not updated" >> status.txt
+      else
+          echo "$TASK_ID (${COMPONENT}) updated" >> status.txt
+      fi
+    else
+      echo "$TASK_ID (${COMPONENT}) not updated" >> status.txt
     fi
 }
 

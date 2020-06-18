@@ -35,3 +35,6 @@ properties:
   - name: JIRA_COMMENT
     type: string
     required: false
+  - name: JIRA_COMPONENTS
+    type: string
+    required: false
