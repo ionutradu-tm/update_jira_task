@@ -105,7 +105,8 @@ function update_task_fix_version(){
       fi
     else
       UPDATE_TASK="y"
-      for X_COMPONENT in ${JIRA_COMPONENTS} do
+      for X_COMPONENT in ${JIRA_COMPONENTS}
+      do
         if [[ ${VERSION} =~ ${X_COMPONENT} ]];then
           UPDATE_TASK="n"
         fi
