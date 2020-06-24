@@ -15,7 +15,7 @@ JIRA_COMMENT=$WERCKER_UPDATE_JIRA_TASK_JIRA_COMMENT
 JIRA_COMPONENTS=$WERCKER_UPDATE_JIRA_TASK_JIRA_COMPONENTS
 
 
-
+UPDATE_TASK=""
 
 #END_VARS
 
@@ -99,20 +99,20 @@ function update_task_fix_version(){
     echo "JIRA_COMPONENT: ${COMPONENT}"
     if [[ ${JIRA_COMPONENTS} =~ ${COMPONENT} ]];then
       if [[ ${VERSION} =~ ${COMPONENT} ]];then
-        UPDATE_TASK="y"
+        export UPDATE_TASK="y"
       else
-        UPDATE_TASK="n"
+        export UPDATE_TASK="n"
       fi
     else
-      UPDATE_TASK="y"
+      export UPDATE_TASK="y"
       for X_COMPONENT in ${JIRA_COMPONENTS}
       do
         if [[ ${VERSION} =~ ${X_COMPONENT} ]];then
-          UPDATE_TASK="n"
+          export UPDATE_TASK="n"
         fi
       done
     fi
-    echo "UPDATE_TASK: ${UPDATE_TASL}"
+    echo "UPDATE_TASK: ${UPDATE_TASK}"
     if [[ ${UPDATE_TASK} == "y" ]];then
       echo -e "{\n}" >empty.json
       cat empty.json |
@@ -201,9 +201,11 @@ else
 
           get_status_id ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${JIRA_URL} ${JIRA_COMMENT}
           if [[ -n ${STATUS_ID} ]]; then
-              update_task_status ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${STATUS_ID} ${JIRA_URL} ${VERSION} ${JIRA_COMMENT}
               echo "Add Fix version ${VERSION} for task ${TASK_ID}"
               update_task_fix_version ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${JIRA_URL} ${VERSION}
+               if [[ ${UPDATE_TASK} == "y" ]];then
+                update_task_status ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${STATUS_ID} ${JIRA_URL} ${VERSION} ${JIRA_COMMENT}
+              fi
           fi
       done
       cat status.txt
