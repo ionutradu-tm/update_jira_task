@@ -35,7 +35,7 @@ function create_version(){
     # generate create_version.json
     START_DATE=$(date +"%Y-%m-%d")
     echo -e "{\n}" >$WERCKER_OUTPUT_DIR/empty.json
-    cat $WERCKER_OUTPUT_DIR/empty.json |
+    cat "$WERCKER_OUTPUT_DIR/empty.json" |
     jq 'setpath(["description"]; "")'|
     jq 'setpath(["name"]; "'"${VERSION}"'")'|
     jq 'setpath(["archived"]; "false")'|
@@ -71,7 +71,7 @@ function get_status_id(){
     if [[ ${RESPONSE_CODE} != 200 ]];then
       echo "Error getting task component"
     else
-      export COMPONENT=$(cat $WERCKER_OUTPUT_DIR/get_task_component.json| jq .fields.components[0].name| tr -d \")
+      export COMPONENT=$(cat $WERCKER_OUTPUT_DIR/get_task_component.json| jq .fields.components[].name| tr -d \")
     fi
 
     export STATUS_ID=$(cat $WERCKER_OUTPUT_DIR/task_details.json|  jq -r '.transitions[] | select(.name=="'"${STATUS_NAME}"'")| .id')
@@ -97,6 +97,13 @@ function update_task_fix_version(){
     shopt -s nocasematch
     echo "COMPONENTS:${JIRA_COMPONENTS}"
     echo "JIRA_COMPONENT: ${COMPONENT}"
+    # if we have more components for a task, keep only the one (the first one) that is in the JIRA_COMPONENTS also
+    for X_COMPONENT in ${JIRA_COMPONENTS}
+    do
+      if [[ ${COMPONENT} =~ ${X_COMPONENT} ]];then
+        export COMPONENT=${X_COMPONENT}
+      fi
+    done
     if [[ ${JIRA_COMPONENTS} =~ ${COMPONENT} ]];then
       if [[ ${VERSION} =~ ${COMPONENT} ]];then
         export UPDATE_TASK="y"
