@@ -98,12 +98,17 @@ function update_task_fix_version(){
     echo "COMPONENTS:${JIRA_COMPONENTS}"
     echo "JIRA_COMPONENT: ${COMPONENT}"
     # if we have more components for a task, keep only the one (the first one) that is in the JIRA_COMPONENTS also
+    X_FOUND="n"
     for X_COMPONENT in ${JIRA_COMPONENTS}
     do
       if [[ ${COMPONENT} =~ ${X_COMPONENT} ]];then
         export COMPONENT=${X_COMPONENT}
+        X_FOUND="y"
       fi
     done
+    if [[ ${X_FOUND} == "n" ]];then
+      COMPONENT=${DEFAULT_COMPONENT}
+    fi
     if [[ ${JIRA_COMPONENTS} =~ ${COMPONENT} ]];then
       if [[ ${VERSION} =~ ${COMPONENT} ]];then
         export UPDATE_TASK="y"
