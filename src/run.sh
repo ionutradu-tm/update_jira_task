@@ -3,9 +3,9 @@
 
 #VARS:
 
-################################
-Expected environment variables #
-################################
+#################################
+#Expected environment variables #
+#################################
 
 # JIRA_TOKEN
 # VERSION jira release name

@@ -25,4 +25,4 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: iradu/changelog
+          tags: iradu/update_jira_task
