@@ -213,7 +213,7 @@ else
       echo "" > status.txt
       for TASK_ID in ${TASK_IDS}
       do
-
+          PROJECT_NAME=$(echo ${TASK_ID} | cut -d\-  -f1)
           get_status_id ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${JIRA_URL} ${JIRA_COMMENT}
           if [[ -n ${STATUS_ID} ]]; then
               echo "Add Fix version ${VERSION} for task ${TASK_ID}"
