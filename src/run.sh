@@ -205,7 +205,7 @@ if [[ -z ${VERSION} ]];then
     echo "Please provide version"
 
 else
-    JIRA_COMMENT=${JIRA_COMMENT:-"Status/fix version updated by wercker"}
+    JIRA_COMMENT=${JIRA_COMMENT:-"Status/fix version updated by GitHub Actions"}
 
     echo "create_version TOKEN ${JIRA_USER} ${VERSION} ${PROJECT_NAME} ${JIRA_URL}"
     create_version ${JIRA_TOKEN} ${JIRA_USER} ${VERSION} ${PROJECT_NAME} ${JIRA_URL}
@@ -214,12 +214,12 @@ else
       for TASK_ID in ${TASK_IDS}
       do
           PROJECT_NAME=$(echo ${TASK_ID} | cut -d\-  -f1)
-          get_status_id ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${JIRA_URL} ${JIRA_COMMENT}
+          get_status_id ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${JIRA_URL} "${JIRA_COMMENT}"
           if [[ -n ${STATUS_ID} ]]; then
               echo "Add Fix version ${VERSION} for task ${TASK_ID}"
               update_task_fix_version ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${JIRA_URL} ${VERSION}
                if [[ ${UPDATE_TASK} == "y" ]];then
-                update_task_status ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${STATUS_ID} ${JIRA_URL} ${VERSION} ${JIRA_COMMENT}
+                update_task_status ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${STATUS_ID} ${JIRA_URL} ${VERSION} "${JIRA_COMMENT}"
               fi
           fi
       done
