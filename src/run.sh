@@ -146,7 +146,9 @@ function update_task_fix_version(){
 }
 
 
-function update_task_status(){
+
+
+function add_task_comment(){
     local TOKEN=$1
     local USER=$2
     local PROJECT_NAME=$3
@@ -156,11 +158,31 @@ function update_task_status(){
     local VERSION=$7
     local COMMENT=$8
 
+     cat $WERCKER_OUTPUT_DIR/empty.json |
+    jq 'setpath(["update","comment",0,"add","body"]; "'"$COMMENT"'")' > add_task_comment.json
+    echo "curl --write-out %{http_code} --silent --output /dev/null -X POST --data @$WERCKER_OUTPUT_DIR/add_task_comment.json $UPDATE_TASK_TRANSITIONS_URL -H "Content-Type: application/json" --user $USER:TOKEN"
+    RESPONSE_CODE=$(curl --write-out %{http_code} --silent --output /dev/null -X POST --data @$WERCKER_OUTPUT_DIR/add_task_comment.json $UPDATE_TASK_TRANSITIONS_URL -H "Content-Type: application/json" --user $USER:$TOKEN)
+    if [[ $RESPONSE_CODE != 204 ]];then
+        echo "Add comment failed for TASK $TASK_ID, ERROR_CODE: $RESPONSE_CODE"
+    fi
+}
+}
+
+
+
+function update_task_status(){
+    local TOKEN=$1
+    local USER=$2
+    local PROJECT_NAME=$3
+    local TASK_ID=$4
+    local URL=$5
+    local COMMENT=$6
+
 
     local UPDATE_TASK_TRANSITIONS_URL=$URL"/rest/api/2/issue/"$TASK_ID"/transitions?expand=transitions.fields"
 
     cat $WERCKER_OUTPUT_DIR/empty.json |
-    jq 'setpath(["update","comment",0,"add","body"]; "'"$COMMENT"'")'|
+
     jq 'setpath(["transition","id"]; "'"$STATUS_ID"'")' > $WERCKER_OUTPUT_DIR/task_status_update.json
     echo "curl --write-out %{http_code} --silent --output /dev/null -X POST --data @$WERCKER_OUTPUT_DIR/task_status_update.json $UPDATE_TASK_TRANSITIONS_URL -H "Content-Type: application/json" --user $USER:TOKEN"
     RESPONSE_CODE=$(curl --write-out %{http_code} --silent --output /dev/null -X POST --data @$WERCKER_OUTPUT_DIR/task_status_update.json $UPDATE_TASK_TRANSITIONS_URL -H "Content-Type: application/json" --user $USER:$TOKEN)
@@ -215,6 +237,8 @@ else
       do
           PROJECT_NAME=$(echo ${TASK_ID} | cut -d\-  -f1)
           get_status_id ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${JIRA_URL} "${JIRA_COMMENT}"
+          echo "Add comment for task ${TASK_ID}"
+          add_task_comment ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${JIRA_URL} "${JIRA_COMMENT}"
           if [[ -n ${STATUS_ID} ]]; then
               echo "Add Fix version ${VERSION} for task ${TASK_ID}"
               update_task_fix_version ${JIRA_TOKEN} ${JIRA_USER} ${PROJECT_NAME} ${TASK_ID} ${JIRA_URL} ${VERSION}
