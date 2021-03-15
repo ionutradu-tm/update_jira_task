@@ -165,7 +165,7 @@ function add_task_comment(){
     if [[ $RESPONSE_CODE != 204 ]];then
         echo "Add comment failed for TASK $TASK_ID, ERROR_CODE: $RESPONSE_CODE"
     fi
-}
+
 }
 
 
