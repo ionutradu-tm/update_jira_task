@@ -156,10 +156,11 @@ function add_task_comment(){
     local URL=$5
     local COMMENT=$6
 
-     cat $WERCKER_OUTPUT_DIR/empty.json |
-    jq 'setpath(["update","comment",0,"add","body"]; "'"$COMMENT"'")' > add_task_comment.json
-    echo "curl --write-out %{http_code} --silent --output /dev/null -X POST --data @$WERCKER_OUTPUT_DIR/add_task_comment.json $UPDATE_TASK_TRANSITIONS_URL -H "Content-Type: application/json" --user $USER:TOKEN"
-    RESPONSE_CODE=$(curl --write-out %{http_code} --silent --output /dev/null -X POST --data @$WERCKER_OUTPUT_DIR/add_task_comment.json $UPDATE_TASK_TRANSITIONS_URL -H "Content-Type: application/json" --user $USER:$TOKEN)
+    local ADD_TASK_COMMENT_URL=$URL"/rest/api/2/issue/"$TASK_ID"/comment"
+    cat $WERCKER_OUTPUT_DIR/empty.json |
+    jq 'setpath(["body"]; "'"$COMMENT"'")' > add_task_comment.json
+    echo "curl --write-out %{http_code} --silent --output /dev/null -X POST --data @$WERCKER_OUTPUT_DIR/add_task_comment.json $ADD_TASK_COMMENT_URL -H "Content-Type: application/json" --user $USER:TOKEN"
+    RESPONSE_CODE=$(curl --write-out %{http_code} --silent --output /dev/null -X POST --data @$WERCKER_OUTPUT_DIR/add_task_comment.json $ADD_TASK_COMMENT_URL -H "Content-Type: application/json" --user $USER:$TOKEN)
     if [[ $RESPONSE_CODE != 204 ]];then
         echo "Add comment failed for TASK $TASK_ID, ERROR_CODE: $RESPONSE_CODE"
     fi
