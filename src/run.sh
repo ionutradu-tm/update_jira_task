@@ -153,10 +153,8 @@ function add_task_comment(){
     local USER=$2
     local PROJECT_NAME=$3
     local TASK_ID=$4
-    local STATUS_ID=$5
-    local URL=$6
-    local VERSION=$7
-    local COMMENT=$8
+    local URL=$5
+    local COMMENT=$6
 
      cat $WERCKER_OUTPUT_DIR/empty.json |
     jq 'setpath(["update","comment",0,"add","body"]; "'"$COMMENT"'")' > add_task_comment.json
@@ -175,9 +173,10 @@ function update_task_status(){
     local USER=$2
     local PROJECT_NAME=$3
     local TASK_ID=$4
-    local URL=$5
-    local COMMENT=$6
-
+    local STATUS_ID=$5
+    local URL=$6
+    local VERSION=$7
+    local COMMENT=$8
 
     local UPDATE_TASK_TRANSITIONS_URL=$URL"/rest/api/2/issue/"$TASK_ID"/transitions?expand=transitions.fields"
 
