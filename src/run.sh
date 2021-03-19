@@ -99,6 +99,7 @@ function update_task_fix_version(){
     local UPDATE_TASK_TRANSITIONS_URL=$URL"/rest/api/3/issue/${TASK_ID}"
     shopt -s nocasematch
     echo "COMPONENTS:${JIRA_COMPONENTS}"
+    ALL_JIRA_COMPONENTS=${COMPONENT}
     echo "JIRA_COMPONENT: ${COMPONENT}"
     # if we have more components for a task, keep only the one (the first one) that is in the JIRA_COMPONENTS also
     X_FOUND="n"
@@ -136,12 +137,12 @@ function update_task_fix_version(){
       RESPONSE_CODE=$(curl --write-out %{http_code} --silent --output /dev/null -X PUT --data @task_status_update.json $UPDATE_TASK_TRANSITIONS_URL -H "Content-Type: application/json" --user $USER:$TOKEN)
       if [[ $RESPONSE_CODE != 204 ]];then
           echo "Update status failed for TASK $TASK_ID, ERROR_CODE: $RESPONSE_CODE"
-          echo "$TASK_ID (${COMPONENT}) not updated" >> status.txt
+          echo "$TASK_ID (${ALL_JIRA_COMPONENTS}) not updated" >> status.txt
       else
-          echo "$TASK_ID (${COMPONENT}) updated" >> status.txt
+          echo "$TASK_ID (${ALL_JIRA_COMPONENTS}) updated" >> status.txt
       fi
     else
-      echo "$TASK_ID (${COMPONENT}) not updated" >> status.txt
+      echo "$TASK_ID (${ALL_JIRA_COMPONENTS}) not updated" >> status.txt
     fi
 }
 
