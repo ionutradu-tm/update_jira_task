@@ -162,7 +162,7 @@ function add_task_comment(){
     jq 'setpath(["body"]; "'"$COMMENT"'")' > add_task_comment.json
     echo "curl --write-out %{http_code} --silent --output /dev/null -X POST --data @add_task_comment.json $ADD_TASK_COMMENT_URL -H "Content-Type: application/json" --user $USER:TOKEN"
     RESPONSE_CODE=$(curl --write-out %{http_code} --silent --output /dev/null -X POST --data @add_task_comment.json $ADD_TASK_COMMENT_URL -H "Content-Type: application/json" --user $USER:$TOKEN)
-    if [[ $RESPONSE_CODE != 204 ]];then
+    if [[ $RESPONSE_CODE != 201 ]];then
         echo "Add comment failed for TASK $TASK_ID, ERROR_CODE: $RESPONSE_CODE"
     fi
 
