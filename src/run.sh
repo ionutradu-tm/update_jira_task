@@ -158,14 +158,26 @@ function add_task_comment(){
     local COMMENT=$6
 
     local ADD_TASK_COMMENT_URL=$URL"/rest/api/2/issue/"$TASK_ID"/comment"
-    cat empty.json |
-    jq 'setpath(["body"]; "'"$COMMENT"'")' > add_task_comment.json
-    echo "curl --write-out %{http_code} --silent --output /dev/null -X POST --data @add_task_comment.json $ADD_TASK_COMMENT_URL -H "Content-Type: application/json" --user $USER:TOKEN"
-    RESPONSE_CODE=$(curl --write-out %{http_code} --silent --output /dev/null -X POST --data @add_task_comment.json $ADD_TASK_COMMENT_URL -H "Content-Type: application/json" --user $USER:$TOKEN)
-    if [[ $RESPONSE_CODE != 201 ]];then
-        echo "Add comment failed for TASK $TASK_ID, ERROR_CODE: $RESPONSE_CODE"
-    fi
+    local CHECK_TASK_STATUS_URL=$URL"/rest/api/2/issue/"$TASK_ID"?fields=status"
 
+    # get task status
+    RESPONSE_CODE=$(curl --write-out %{http_code} --silent --output get_task_status.json ${CHECK_TASK_STATUS_URL} --user $USER:$TOKEN)
+    if [[ $RESPONSE_CODE != 200 ]];then
+      echo "Unable to the status code for task $TASK_ID"
+    else
+      local STATUS_NAME=$(cat get_task_component.json | jq -r .fields.status.name)
+      if  [[ "${STATUS_NAME,,}" != "done" ]]; then
+        cat empty.json |
+        jq 'setpath(["body"]; "'"$COMMENT"'")' > add_task_comment.json
+        echo "curl --write-out %{http_code} --silent --output /dev/null -X POST --data @add_task_comment.json $ADD_TASK_COMMENT_URL -H "Content-Type: application/json" --user $USER:TOKEN"
+        RESPONSE_CODE=$(curl --write-out %{http_code} --silent --output /dev/null -X POST --data @add_task_comment.json $ADD_TASK_COMMENT_URL -H "Content-Type: application/json" --user $USER:$TOKEN)
+        if [[ $RESPONSE_CODE != 201 ]];then
+            echo "Add comment failed for TASK $TASK_ID, ERROR_CODE: $RESPONSE_CODE"
+        fi
+      else
+        echo "Don't add comment for completed task ($TASK_ID)"
+      fi
+    fi
 }
 
 
