@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:24.10
 COPY src/run.sh /run.sh
 RUN chmod +x /run.sh
 RUN apt update
